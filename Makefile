@@ -1,6 +1,6 @@
 lib = "lib/libws2811.a"
 
-all: bin/rainbow
+all: ${lib} bin/rainbow bin/monohorn
 
 ${lib}:
 	gcc -o ws2811.o -c -g -O2 -Wall -Werror ws2811.c -fPIC
@@ -13,10 +13,13 @@ ${lib}:
 	ranlib $@
 
 bin/rainbow: ${lib}
-	gcc -o rainbow.o -c -g -O2 -Wall -Werror rainbow.c
-	gcc -o $@ rainbow.o $<
+	gcc -o $@ -O2 -Wall -Werror $(notdir $@).c matrix.c ${lib}
+
+bin/monohorn: ${lib}
+	gcc -o $@ -O2 -Wall -Werror $(notdir $@).c matrix.c ${lib} -llo
 
 clean:
 	-rm ws2811.o pwm.o dma.o board_info.o mailbox.o rpihw.o
 	-rm ${lib}
-	-rm bin/rainbow rainbow.o
+	-rm bin/rainbow
+	-rm bin/monohorn

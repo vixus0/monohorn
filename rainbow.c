@@ -28,63 +28,19 @@
  */
 
 
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <sys/mman.h>
 #include <signal.h>
 
-#include "clk.h"
-#include "gpio.h"
-#include "dma.h"
-#include "pwm.h"
-
 #include "ws2811.h"
+#include "matrix.h"
 
-
-#define ARRAY_SIZE(stuff)                        (sizeof(stuff) / sizeof(stuff[0]))
-
-#define TARGET_FREQ                              WS2811_TARGET_FREQ
-#define GPIO_PIN                                 18
-#define DMA                                      5
-
-#define WIDTH                                    8
-#define HEIGHT                                   8
-#define LED_COUNT                                (WIDTH * HEIGHT)
-
-
-ws2811_t ledstring =
-{
-    .freq = TARGET_FREQ,
-    .dmanum = DMA,
-    .channel =
-    {
-        [0] =
-        {
-            .gpionum = GPIO_PIN,
-            .count = LED_COUNT,
-            .invert = 0,
-            .brightness = 255,
-        },
-        [1] =
-        {
-            .gpionum = 0,
-            .count = 0,
-            .invert = 0,
-            .brightness = 0,
-        },
-    },
-};
+#define ARRAY_SIZE(stuff) (sizeof(stuff) / sizeof(stuff[0]))
+#define WIDTH 8
+#define HEIGHT 8
 
 ws2811_led_t matrix[WIDTH][HEIGHT];
 
-
-void matrix_render(void)
+void rb_render()
 {
     int x, y;
 
@@ -92,12 +48,12 @@ void matrix_render(void)
     {
         for (y = 0; y < HEIGHT; y++)
         {
-            ledstring.channel[0].leds[(y * WIDTH) + x] = matrix[x][y];
+            matrix_set(x, y, matrix[x][y]);
         }
     }
 }
 
-void matrix_raise(void)
+void rb_raise(void)
 {
     int x, y;
 
@@ -123,7 +79,7 @@ ws2811_led_t dotcolors[] =
     0x200010,  // pink
 };
 
-void matrix_bottom(void)
+void rb_bottom(void)
 {
     int i;
 
@@ -141,18 +97,13 @@ void matrix_bottom(void)
 
 static void ctrl_c_handler(int signum)
 {
-    ws2811_fini(&ledstring);
+  matrix_end();
 }
 
 static void setup_handlers(void)
 {
-    struct sigaction sa =
-    {
-        .sa_handler = ctrl_c_handler,
-    };
-
-    sigaction(SIGINT, &sa, NULL);
-    sigaction(SIGTERM, &sa, NULL);
+    signal(SIGINT, ctrl_c_handler);
+    signal(SIGTERM, ctrl_c_handler);
 }
 
 int main(int argc, char *argv[])
@@ -161,18 +112,18 @@ int main(int argc, char *argv[])
 
     setup_handlers();
 
-    if (ws2811_init(&ledstring))
+    if (matrix_init())
     {
         return -1;
     }
 
     while (1)
     {
-        matrix_raise();
-        matrix_bottom();
-        matrix_render();
+        rb_raise();
+        rb_bottom();
+        rb_render();
 
-        if (ws2811_render(&ledstring))
+        if (matrix_render())
         {
             ret = -1;
             break;
@@ -182,7 +133,7 @@ int main(int argc, char *argv[])
         usleep(1000000 / 15);
     }
 
-    ws2811_fini(&ledstring);
+    matrix_end();
 
     return ret;
 }
