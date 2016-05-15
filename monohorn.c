@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <signal.h>
 #include <unistd.h>
 #include <sys/stat.h>
@@ -8,8 +9,10 @@
 #define SOCKET_PATH "/tmp/monohorn.socket"
 
 static void mh_cleanup() {
+  printf("Shutting down\n");
   matrix_clear();
   matrix_end();
+  exit(1);
 }
 
 static void mh_sigint(int sig) {
@@ -43,16 +46,19 @@ int main(int argc, char *argv[]) {
   if (matrix_init() < 0) return 1;
 
   // Set up OSC server
+  const char *path;
   lo_server_thread st;
   int chmod_err = 0;
 
   if (argc > 1) {
-    st = lo_server_thread_new(argv[1], mh_osc_error);
-    chmod_err = chmod_socket(argv[1]);
+    path = argv[1];
   } else {
-    st = lo_server_thread_new(SOCKET_PATH, mh_osc_error);
-    chmod_err = chmod_socket(SOCKET_PATH);
+    path = SOCKET_PATH;
   }
+
+  unlink(path);
+  st = lo_server_thread_new(path, mh_osc_error);
+  chmod_err = chmod_socket(path);
 
   if (chmod_err != 0) {
     fprintf(stderr, "Error changing socket permissions\n");
@@ -64,6 +70,9 @@ int main(int argc, char *argv[]) {
   lo_server_thread_add_method(st, "/render", NULL, mh_osc_render, NULL);
   lo_server_thread_add_method(st, "/clear", NULL, mh_osc_clear, NULL);
   lo_server_thread_start(st);
+
+  // Ready
+  printf("Listening on socket: %s\n", path);
 
   while (1) {
     usleep(1000);
