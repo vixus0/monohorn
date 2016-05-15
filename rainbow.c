@@ -112,9 +112,9 @@ int main(int argc, char *argv[])
 
     setup_handlers();
 
-    if (matrix_init())
+    if (matrix_init() < 0)
     {
-        return -1;
+        return 1;
     }
 
     while (1)
@@ -123,9 +123,9 @@ int main(int argc, char *argv[])
         rb_bottom();
         rb_render();
 
-        if (matrix_render())
+        if (matrix_render() < 0)
         {
-            ret = -1;
+            ret = 1;
             break;
         }
 

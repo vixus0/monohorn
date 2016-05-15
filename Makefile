@@ -1,6 +1,6 @@
 lib = "lib/libws2811.a"
 
-all: ${lib} bin/rainbow bin/monohorn
+all: ${lib} bin/rainbow bin/rainblo bin/monohorn
 
 ${lib}:
 	gcc -o ws2811.o -c -g -O2 -Wall -Werror ws2811.c -fPIC
@@ -14,6 +14,9 @@ ${lib}:
 
 bin/rainbow: ${lib}
 	gcc -o $@ -O2 -Wall -Werror $(notdir $@).c matrix.c ${lib}
+
+bin/rainblo: ${lib}
+	gcc -o $@ -O2 -Wall -Werror $(notdir $@).c ${lib} -llo
 
 bin/monohorn: ${lib}
 	gcc -o $@ -O2 -Wall -Werror $(notdir $@).c matrix.c ${lib} -llo

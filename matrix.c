@@ -47,5 +47,12 @@ void matrix_set(int x, int y, ws2811_led_t colour) {
   leds.channel[0].leds[(y * WIDTH) + x] = colour;
 }
 
+void matrix_clear() {
+  int x, y;
+  for (x = 0; x < WIDTH; x++) for (y = 0; y < HEIGHT; y++)
+    matrix_set(x, y, 0);
+  matrix_render();
+}
+
 int matrix_width() { return WIDTH; }
 int matrix_height() { return HEIGHT; }

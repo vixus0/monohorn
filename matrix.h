@@ -4,6 +4,7 @@ int matrix_init();
 void matrix_end();
 int matrix_render();
 void matrix_set(int x, int y, ws2811_led_t colour);
+void matrix_clear();
 int matrix_width();
 int matrix_height();
 

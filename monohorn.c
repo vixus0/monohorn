@@ -1,17 +1,23 @@
 #include <stdio.h>
 #include <signal.h>
 #include <unistd.h>
+#include <sys/stat.h>
 #include "lo/lo.h"
 #include "matrix.h"
 
 #define SOCKET_PATH "/tmp/monohorn.socket"
 
 static void mh_cleanup() {
+  matrix_clear();
   matrix_end();
 }
 
 static void mh_sigint(int sig) {
   mh_cleanup();
+}
+
+int chmod_socket(const char *path) {
+  return chmod(path, S_IWGRP | S_IWOTH);
 }
 
 void mh_osc_error(int num, const char *msg, const char *path);
@@ -38,11 +44,19 @@ int main(int argc, char *argv[]) {
 
   // Set up OSC server
   lo_server_thread st;
+  int chmod_err = 0;
 
   if (argc > 1) {
     st = lo_server_thread_new(argv[1], mh_osc_error);
+    chmod_err = chmod_socket(argv[1]);
   } else {
     st = lo_server_thread_new(SOCKET_PATH, mh_osc_error);
+    chmod_err = chmod_socket(SOCKET_PATH);
+  }
+
+  if (chmod_err != 0) {
+    fprintf(stderr, "Error changing socket permissions\n");
+    return 1;
   }
 
   // Set up OSC message handlers
@@ -94,12 +108,6 @@ int mh_osc_clear(
     void *data, void *user_data
     )
 {
-  int x, y;
-
-  for (x = 0; x < matrix_width(); x++)
-    for (y = 0; y < matrix_height(); y++)
-      matrix_set(x, y, 0);
-
-  matrix_render();
+  matrix_clear();
   return 0;
 }
