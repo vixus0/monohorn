@@ -19,7 +19,7 @@ ws2811_t leds =
             .gpionum = GPIO_PIN,
             .count = LED_COUNT,
             .invert = 0,
-            .brightness = 80,
+            .brightness = 255,
         },
         [1] =
         {
