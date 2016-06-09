@@ -58,7 +58,9 @@ int matrix_render() {
 }
 
 void matrix_set(int x, int y, ws2811_led_t colour) {
-  leds.channel[0].leds[get_pixel_pos(x,y)] = colour;
+  if (x >= 0 && x < WIDTH && y >= 0 && y < WIDTH) {
+    leds.channel[0].leds[get_pixel_pos(x,y)] = colour;
+  }
 }
 
 void matrix_clear() {
